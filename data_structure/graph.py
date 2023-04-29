@@ -3,82 +3,101 @@ import matplotlib.pyplot as plt
 
 
 class Node(object):
-    def __init__(self, value: int):
+    def __init__(self, value):
         self.value = value
         self.edges: list[Edge] = []
+        self.visited = False
 
 
 class Edge(object):
-    def __init__(self, value: int, node_from: Node, node_to: Node):
+    def __init__(self, value, node_from: Node, node_to: Node):
         self.value = value
         self.node_from = node_from
         self.node_to = node_to
 
 
-# TODO:
-# 1. Node can't be inserted if exisited
-# 2. get_adjacency_matrix currently assume node is in numeric order
 class Graph(object):
+    def __init__(self, nodes=None, edges=None):
+        self.nodes = nodes or []
+        self.edges = edges or []
+        self.node_names = []
+        self._node_map = {}
 
-    def __init__(self, nodes: list[Node] = [], edges: list[Edge] = []):
-        self.nodes = nodes
-        self.edges = edges
+    def set_node_names(self, names):
+        """The Nth name in names should correspond to node number N.
+        Node numbers are 0 based (starting at 0).
+        """
+        self.node_names = list(names)
 
     def insert_node(self, new_node_val):
+        "Insert a new node with value new_node_val"
         new_node = Node(new_node_val)
         self.nodes.append(new_node)
+        self._node_map[new_node_val] = new_node
+        return new_node
 
     def insert_edge(self, new_edge_val, node_from_val, node_to_val):
-        from_found = None
-        to_found = None
+        "Insert a new edge, creating new nodes if necessary"
+        nodes = {node_from_val: None, node_to_val: None}
         for node in self.nodes:
-            if node_from_val == node.value:
-                from_found = node
-            if node_to_val == node.value:
-                to_found = node
-        if from_found == None:
-            from_found = Node(node_from_val)
-            self.nodes.append(from_found)
-        if to_found == None:
-            to_found = Node(node_to_val)
-            self.nodes.append(to_found)
-        new_edge = Edge(new_edge_val, from_found, to_found)
-        from_found.edges.append(new_edge)
-        to_found.edges.append(new_edge)
+            if node.value in nodes:
+                nodes[node.value] = node
+                if all(nodes.values()):
+                    break
+        for node_val in nodes:
+            nodes[node_val] = nodes[node_val] or self.insert_node(node_val)
+        node_from = nodes[node_from_val]
+        node_to = nodes[node_to_val]
+        new_edge = Edge(new_edge_val, node_from, node_to)
+        node_from.edges.append(new_edge)
+        node_to.edges.append(new_edge)
         self.edges.append(new_edge)
 
-    def get_node_list(self):
-        result = []
-        for node in self.nodes:
-            result.append(node.value)
-        return result
-
     def get_edge_list(self):
-        """Don't return a list of edge objects!
-        Return a list of triples that looks like this:
-        (Edge Value, From Node Value, To Node Value)"""
-        result = []
-        for edge in self.edges:
-            result.append(
-                (edge.value, edge.node_from.value, edge.node_to.value))
-        return result
+        """Return a list of triples that looks like this:
+        (Edge Value, From Node, To Node)"""
+        return [(e.value, e.node_from.value, e.node_to.value)
+                for e in self.edges]
+
+    def get_edge_list_names(self):
+        """Return a list of triples that looks like this:
+        (Edge Value, From Node Name, To Node Name)"""
+        return [(edge.value,
+                 self.node_names[edge.node_from.value],
+                 self.node_names[edge.node_to.value])
+                for edge in self.edges]
 
     def get_adjacency_list(self):
-        """Don't return any Node or Edge objects!
-        You'll return a list of lists.
-        The indecies of the outer list represent
-        "from" nodes.
+        """Return a list of lists.
+        The indecies of the outer list represent "from" nodes.
         Each section in the list will store a list
         of tuples that looks like this:
         (To Node, Edge Value)"""
-        result = []
-        for node in self.nodes:
-            tmp = []
-            for edge in node.edges:
-                if edge.node_from.value == node.value:
-                    tmp.append((edge.node_to.value, edge.value))
-            result.append(tmp if len(tmp) != 0 else None)
-        return result
+        max_index = self.find_max_index()
+        adjacency_list = [[] for _ in range(max_index)]
+        for edg in self.edges:
+            from_value, to_value = edg.node_from.value, edg.node_to.value
+            adjacency_list[from_value].append((to_value, edg.value))
+        return [a or None for a in adjacency_list]  # replace []'s with None
+
+    def get_adjacency_list_names(self):
+        """Each section in the list will store a list
+        of tuples that looks like this:
+        (To Node Name, Edge Value).
+        Node names should come from the names set
+        with set_node_names."""
+        adjacency_list = self.get_adjacency_list()
+
+        def convert_to_names(pair, graph=self):
+            node_number, value = pair
+            return (graph.node_names[node_number], value)
+
+        def map_conversion(adjacency_list_for_node):
+            if adjacency_list_for_node is None:
+                return None
+            return map(convert_to_names, adjacency_list_for_node)
+        return [map_conversion(adjacency_list_for_node)
+                for adjacency_list_for_node in adjacency_list]
 
     def get_adjacency_matrix(self):
         """Return a matrix, or 2D list.
@@ -86,31 +105,91 @@ class Graph(object):
         column numbers represent to nodes.
         Store the edge values in each spot,
         and a 0 if no edge exists."""
-        result = []
+        max_index = self.find_max_index()
+        adjacency_matrix = [[0] * (max_index) for _ in range(max_index)]
+        for edg in self.edges:
+            from_index, to_index = edg.node_from.value, edg.node_to.value
+            adjacency_matrix[from_index][to_index] = edg.value
+        return adjacency_matrix
+
+    def find_max_index(self):
+        """Return the highest found node number
+        Or the length of the node names if set with set_node_names()."""
+        if len(self.node_names) > 0:
+            return len(self.node_names)
+        max_index = -1
+        if len(self.nodes):
+            for node in self.nodes:
+                if node.value > max_index:
+                    max_index = node.value
+        return max_index
+
+    def find_node(self, node_number) -> Node:
+        "Return the node with value node_number or None"
+        return self._node_map.get(node_number)
+
+    def _clear_visited(self):
         for node in self.nodes:
-            tmp = [0]*len(self.nodes)
-            for edge in node.edges:
-                if edge.node_from.value == node.value:
-                    tmp[edge.node_to.value] = edge.value
-            result.append(tmp)
+            node.visited = False
 
-        return result
+    def dfs_helper(self, start_node: Node):
+        """TODO: Write the helper function for a recursive implementation
+        of Depth First Search iterating through a node's edges. The
+        output should be a list of numbers corresponding to the
+        values of the traversed nodes.
+        ARGUMENTS: start_node is the starting Node
+        MODIFIES: the value of the visited property of nodes in self.nodes 
+        RETURN: a list of the traversed node values (integers).
+        """
+        if start_node.visited:
+            return
 
-    def adjacency_matrix_to_graph(self):
-        matrix = self.get_adjacency_matrix()
-        G = nx.Graph()
-        for i in range(len(matrix)):
-            for j in range(i, len(matrix[i])):
-                if matrix[i][j] != 0:
-                    G.add_edge(i, j, weight=matrix[i][j])
-        return G
+        self._return_list.append(start_node.value)
+        start_node.visited = True
+        for edge in start_node.edges:
+            self.dfs_helper(edge.node_from)
+            self.dfs_helper(edge.node_to)
+        return self._return_list
 
-    def plot_graph(self, node_color: str, node_size: int, show_label: bool):
-        G = self.adjacency_matrix_to_graph()
-        pos = nx.spring_layout(G)
-        nx.draw(G, pos, with_labels=True,
-                node_color=node_color, node_size=node_size)
-        labels = nx.get_edge_attributes(G, 'weight' if show_label else None)
-        nx.draw_networkx_edge_labels(G, pos, edge_labels=labels)
-        plt.show()
-        return
+    def dfs(self, start_node_num):
+        """Outputs a list of numbers corresponding to the traversed nodes
+        in a Depth First Search.
+        ARGUMENTS: start_node_num is the starting node number (integer)
+        MODIFIES: the value of the visited property of nodes in self.nodes
+        RETURN: a list of the node values (integers)."""
+        self._clear_visited()
+        self._return_list = []
+        start_node = self.find_node(start_node_num)
+        return self.dfs_helper(start_node)
+
+    def dfs_names(self, start_node_num):
+        """Return the results of dfs with numbers converted to names."""
+        return [self.node_names[num] for num in self.dfs(start_node_num)]
+
+    def bfs(self, start_node_num):
+        """TODO: Create an iterative implementation of Breadth First Search
+        iterating through a node's edges. The output should be a list of
+        numbers corresponding to the traversed nodes.
+        ARGUMENTS: start_node_num is the node number (integer)
+        MODIFIES: the value of the visited property of nodes in self.nodes
+        RETURN: a list of the node values (integers)."""
+
+        node = self.find_node(start_node_num)
+        self._clear_visited()
+        ret_list = []
+        node_to_traverse = [node]
+        while node_to_traverse:
+            current_node = node_to_traverse.pop(0)
+            if current_node.visited:
+                continue
+
+            current_node.visited = True
+            ret_list.append(current_node.value)
+            for edge in current_node.edges:
+                node_to_traverse.append(edge.node_from)
+                node_to_traverse.append(edge.node_to)
+        return ret_list
+
+    def bfs_names(self, start_node_num):
+        """Return the results of bfs with numbers converted to names."""
+        return [self.node_names[num] for num in self.bfs(start_node_num)]
