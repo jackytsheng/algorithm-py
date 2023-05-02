@@ -1,8 +1,7 @@
-
 import time
 
 
-def in_place_int_bubble_sort(nums: list[int | float], print_detail: False):
+def bubble_sort(nums: list[int | float], print_detail: False):
     """
     nums: Sort int array,
     print_detail: enable detail to be print
@@ -37,6 +36,52 @@ def in_place_int_bubble_sort(nums: list[int | float], print_detail: False):
     toc = time.perf_counter()
 
     print_detail and print_detail_helper(len(nums), toc-tic)
+
+
+def insert_sort(nums: list[int | float], print_detail: False):
+    """
+    nums: Sort int array,
+    print_detail: enable detail to be print
+
+    Worst complexity: n^2
+    Average complexity: n^2
+    Best complexity: n
+    Space complexity: 1
+    Method: Insertion
+    Stable: Yes
+    """
+
+    tic = time.perf_counter()
+    # Algorithm begins
+    if len(nums) < 2:
+        toc = time.perf_counter()
+        print_detail and print_detail_helper(len(nums), toc-tic)
+        return nums
+
+    for i in range(1, len(nums)):
+        j = i
+        while j > 0:
+            if nums[j-1] > nums[j]:
+                nums[j], nums[j-1] = nums[j-1], nums[j]
+            j -= 1
+    # Algorithm ends
+    toc = time.perf_counter()
+    print_detail and print_detail_helper(len(nums), toc-tic)
+
+
+def merge_sort(nums: list[int | float], print_detail: False):
+    """
+    nums: Sort int array,
+    print_detail: enable detail to be print
+
+    Worst complexity: n*log(n)
+    Average complexity: n*log(n)
+    Best complexity: n*log(n)
+    Space complexity: n
+    Method: Merging
+    Stable: Yes
+    """
+    pass
 
 
 def print_detail_helper(element_length, time_diff):
