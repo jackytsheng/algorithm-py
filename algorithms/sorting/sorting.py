@@ -1,7 +1,7 @@
 import time
 
 
-def bubble_sort(nums: list[int | float], print_detail: False):
+def bubble_sort(nums: list[int | float], print_detail: bool = False):
     """
     nums: Sort int array,
     print_detail: enable detail to be print
@@ -38,7 +38,7 @@ def bubble_sort(nums: list[int | float], print_detail: False):
     print_detail and print_detail_helper(len(nums), toc-tic)
 
 
-def insert_sort(nums: list[int | float], print_detail: False):
+def insert_sort(nums: list[int | float], print_detail: bool = False):
     """
     nums: Sort int array,
     print_detail: enable detail to be print
