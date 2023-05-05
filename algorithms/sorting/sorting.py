@@ -71,7 +71,49 @@ def insert_sort(nums: list[int | float], print_detail: bool = False):
     print_detail and print_detail_helper(len(nums), toc-tic)
 
 
-def merge_sort(nums: list[int | float], print_detail: False):
+def merge() -> list[int | float]:
+    pass
+
+
+def merge_sort_helper(nums) -> list[int | float]:
+
+    # check base case, [], [n] is sorted by default
+    if len(nums) < 2:
+        return
+
+    # get the mid point
+    mid = len(nums) // 2
+
+    # break array into left and right
+    left_array = nums[:mid]
+    right_array = nums[mid:]
+
+    # assume passing in helper will sort both array
+    merge_sort_helper(left_array)
+    merge_sort_helper(right_array)
+
+    # merge back the two part
+    i = j = k = 0
+    while i < len(left_array) and j < len(right_array):
+        if left_array[i] <= right_array[j]:
+            nums[k] = left_array[i]
+            i += 1
+        else:
+            nums[k] = right_array[j]
+            j += 1
+        k += 1
+
+    while i < len(left_array):
+        nums[k] = left_array[i]
+        i += 1
+        k += 1
+    while j < len(right_array):
+        nums[k] = right_array[j]
+        j += 1
+        k += 1
+
+
+def merge_sort(nums: list[int | float], print_detail: bool = False):
     """
     nums: Sort int array,
     print_detail: enable detail to be print
@@ -83,7 +125,21 @@ def merge_sort(nums: list[int | float], print_detail: False):
     Method: Merging
     Stable: Yes
     """
-    pass
+
+    tic = time.perf_counter()
+
+    # Algorithm begins
+    if len(nums) < 2:
+        toc = time.perf_counter()
+        print_detail and print_detail_helper(len(nums), toc-tic)
+        return nums
+
+    # assume nums passed in will be mutated and sorted
+    merge_sort_helper(nums)
+
+    # Algorithm ends
+    toc = time.perf_counter()
+    print_detail and print_detail_helper(len(nums), toc-tic)
 
 
 def quick_sort_helper(nums: list[int | float]) -> list[int | float]:
