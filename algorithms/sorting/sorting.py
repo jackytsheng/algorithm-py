@@ -162,30 +162,31 @@ def quick_sort_helper(nums: list[int | float]) -> list[int | float]:
     return quick_sort_helper(nums[:l]) + [nums[l]] + quick_sort_helper(nums[l+1:])
 
 
-# Quick sort in Python
-
-# function to find the partition position
-def quick_sort_partition(array, low, high):
+# sort acoording to quick sort rule
+def quick_sort_partition(nums, start_pointer, end_pointer):
+    # element less than 2 considered sorted
+    if len(nums) < 2:
+        return
 
     # choose the rightmost element as pivot
-    pivot = array[high]
+    pivot = nums[end_pointer]
 
-    # pointer for greater element
-    i = low - 1
+    # set the left start pointer for grater element
+    i = start_pointer - 1
 
-    # traverse through all elements
-    # compare each element with pivot
-    for j in range(low, high):
-        if array[j] <= pivot:
-            # if element smaller than pivot is found
-            # swap it with the greater element pointed by i
+    for j in range(start_pointer, end_pointer):
+        if nums[j] <= pivot:
+            # increase the left pointer to the next grater element
             i += 1
 
-            # swapping element at i with element at j
-            array[i], array[j] = array[j], array[i]
+            # swap it with the greater element pointed by i
+            # nums[i] and nums[j] could be the same element
+            # i will alwasys be less than j
+            nums[i], nums[j] = nums[j], nums[i]
 
     # swap the pivot element with the greater element specified by i
-    array[i + 1], array[high] = array[high], array[i + 1]
+    # they can also be the same
+    nums[i + 1], nums[end_pointer] = nums[end_pointer], nums[i + 1]
 
     # return the position from where partition is done
     return i + 1
@@ -193,19 +194,20 @@ def quick_sort_partition(array, low, high):
 # function to perform quicksort
 
 
-def quick_sort_helper(array, low, high):
-    if low < high:
+def quick_sort_helper(nums, low, high):
 
+    # its important as left most element could have high = -1 and low = 0
+    if low < high:
         # find pivot element such that
         # element smaller than pivot are on the left
         # element greater than pivot are on the right
-        pi = quick_sort_partition(array, low, high)
+        pi = quick_sort_partition(nums, low, high)
 
-        # recursive call on the left of pivot
-        quick_sort_helper(array, low, pi - 1)
+        # after sorting the left portion will be sorted in place
+        quick_sort_helper(nums, low, pi - 1)
 
-        # recursive call on the right of pivot
-        quick_sort_helper(array, pi + 1, high)
+        # after sorting the right portion will be sorted in place
+        quick_sort_helper(nums, pi + 1, high)
 
 
 def quick_sort(nums: list[int | float], print_detail: bool = False) -> list[int | float]:
